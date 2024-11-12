@@ -65,8 +65,6 @@ export class ImportModal extends Modal {
 	async searchAndImportPaper(arxivId: string) {
 		const paper = await searchPaper(arxivId);
 
-		console.log(paper);
-
 		const pdfFolder = (this.app as any).plugins.plugins["paper_importer"]
 			.settings.pdfFolder;
 
