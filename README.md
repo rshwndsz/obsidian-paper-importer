@@ -10,7 +10,7 @@ Enable community plugins in Obsidian and search for `Paper Importer`. (Still und
 
 ### Manual
 
-Create a folder in `Your Vault/.obsidian/paper_importer`. Download `main.js`, `manifest.json`
+Create a folder in `Your Vault/.obsidian/plugins/paper_importer`. Download `main.js`, `manifest.json`
 and `styles.css` from the release page and put them in the folder you created. Enable community
 plugins in Obsidian setting and that's it.
 
