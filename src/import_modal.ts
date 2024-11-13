@@ -73,9 +73,10 @@ export class ImportModal extends Modal {
 		}
 
 		const pdfFolderPath = this.app.vault.getFolderByPath(pdfFolder)!;
-		const pdfPath = normalizePath(
-			`${pdfFolderPath.path}/${paper.title} (${paper.paperId}).pdf`
+		const pdfFilename = this.sanitizeFilename(
+			`${paper.title} (${paper.paperId}).pdf`
 		);
+		const pdfPath = normalizePath(`${pdfFolderPath.path}/${pdfFilename}`);
 
 		const response = await requestUrl(paper.pdfUrl);
 		await this.app.vault.adapter.writeBinary(pdfPath, response.arrayBuffer);
@@ -88,12 +89,15 @@ export class ImportModal extends Modal {
 		}
 
 		const noteFolderPath = this.app.vault.getFolderByPath(noteFolder)!;
+		const noteFilename = this.sanitizeFilename(
+			`${paper.title} (${paper.paperId}).md`
+		);
 		const notePath = normalizePath(
-			`${noteFolderPath.path}/${paper.title} (${paper.paperId}).md`
+			`${noteFolderPath.path}/${noteFilename}`
 		);
 		const noteContent = noteTemplate
 			.replace(/{{\s*paper_id\s*}}/g, paper.paperId)
-			.replace(/{{\s*title\s*}}/g, paper.title)
+			.replace(/{{\s*title\s*}}/g, `"${paper.title}"`)
 			.replace(/{{\s*authors\s*}}/g, paper.authors.join(", "))
 			.replace(/{{\s*date\s*}}/g, paper.date)
 			.replace(/{{\s*abstract\s*}}/g, `"${paper.abstract}"`)
@@ -128,5 +132,12 @@ export class ImportModal extends Modal {
 		}
 
 		throw new Error("Invalid arXiv ID or URL");
+	}
+
+	sanitizeFilename(filename: string): string {
+		return filename
+			.replace(/[/\\?%*:|"<>]/g, " ")
+			.replace(/\s+/g, " ")
+			.trim();
 	}
 }
