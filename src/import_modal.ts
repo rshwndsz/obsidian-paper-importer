@@ -105,14 +105,14 @@ export class ImportModal extends Modal {
 
 	extractArxivId(text: string): string {
 		// Match against arXiv:xxxx.xxxx or arxiv:xxxx.xxxxx
-		const arxivIdPattern = /(?<=arXiv:)\d{4}\.\d{4,5}/;
+		const arxivIdPattern = /^arXiv:(\d{4}\.\d{4,5})$/;
 		const match = text.match(arxivIdPattern);
 		if (match) {
-			return match[0];
+			return match[match.length - 1];
 		}
 
 		// Match against xxxx.xxxx or xxxx.xxxxx
-		const idPattern = /\d{4}\.\d{4,5}/;
+		const idPattern = /^\d{4}\.\d{4,5}$/;
 		const idMatch = text.match(idPattern);
 		if (idMatch) {
 			return idMatch[0];
@@ -120,10 +120,11 @@ export class ImportModal extends Modal {
 
 		// Match against arxiv.org/abs/xxxx.xxxx or arxiv.org/abs/xxxx.xxxxx or
 		// arxiv.org/pdf/xxxx.xxxx or arxiv.org/pdf/xxxx.xxxxx
-		const urlPattern = /(?<=arxiv\.org\/(abs|pdf)\/)\d{4}\.\d{4,5}/;
+		const urlPattern =
+			/^(https?:\/\/)?(www\.)?arxiv\.org\/(abs|pdf)\/(\d{4}\.\d{4,5})$/;
 		const urlMatch = text.match(urlPattern);
 		if (urlMatch) {
-			return urlMatch[0];
+			return urlMatch[urlMatch.length - 1];
 		}
 
 		throw new Error("Invalid arXiv ID or URL");
