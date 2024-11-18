@@ -2,10 +2,15 @@ import { App, Modal, Notice, normalizePath, requestUrl } from "obsidian";
 
 import { searchPaper } from "./arxiv";
 import noteTemplate from "./note_template";
+import { PaperImporterPluginSettings } from "./setting_tab";
 
 export class ImportModal extends Modal {
-	constructor(app: App) {
+	settings: PaperImporterPluginSettings;
+
+	constructor(app: App, settings: PaperImporterPluginSettings) {
 		super(app);
+
+		this.settings = settings;
 	}
 
 	onOpen() {
@@ -28,7 +33,7 @@ export class ImportModal extends Modal {
 
 		contentEl.addEventListener("keypress", async (e) => {
 			if (e.key === "Enter") {
-				new Notice("Searching for paper...");
+				new Notice("Importing paper...");
 
 				const paper = (
 					contentEl.querySelector(
@@ -65,14 +70,13 @@ export class ImportModal extends Modal {
 	async searchAndImportPaper(arxivId: string) {
 		const paper = await searchPaper(arxivId);
 
-		const pdfFolder = (this.app as any).plugins.plugins["paper_importer"]
-			.settings.pdfFolder;
+		const pdfFolder = normalizePath(this.settings.pdfFolder);
 
-		if (!(await this.app.vault.adapter.exists(normalizePath(pdfFolder)))) {
-			await this.app.vault.createFolder(pdfFolder);
+		let pdfFolderPath = this.app.vault.getFolderByPath(pdfFolder)!;
+		if (!pdfFolderPath) {
+			pdfFolderPath = await this.app.vault.createFolder(pdfFolder);
 		}
 
-		const pdfFolderPath = this.app.vault.getFolderByPath(pdfFolder)!;
 		const pdfFilename = this.sanitizeFilename(
 			`${paper.title} (${paper.paperId}).pdf`
 		);
@@ -81,14 +85,13 @@ export class ImportModal extends Modal {
 		const response = await requestUrl(paper.pdfUrl);
 		await this.app.vault.adapter.writeBinary(pdfPath, response.arrayBuffer);
 
-		const noteFolder = (this.app as any).plugins.plugins["paper_importer"]
-			.settings.noteFolder;
+		const noteFolder = normalizePath(this.settings.noteFolder);
 
-		if (!(await this.app.vault.adapter.exists(normalizePath(noteFolder)))) {
-			await this.app.vault.createFolder(noteFolder);
+		let noteFolderPath = this.app.vault.getFolderByPath(noteFolder)!;
+		if (!noteFolderPath) {
+			noteFolderPath = await this.app.vault.createFolder(noteFolder);
 		}
 
-		const noteFolderPath = this.app.vault.getFolderByPath(noteFolder)!;
 		const noteFilename = this.sanitizeFilename(
 			`${paper.title} (${paper.paperId}).md`
 		);

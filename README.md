@@ -1,4 +1,4 @@
-# Obsidian Paper Importer
+# Paper Importer
 
 A plugin to help you import papers from arXiv into Obsidian.
 

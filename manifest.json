@@ -1,9 +1,9 @@
 {
 	"id": "paper_importer",
 	"name": "Paper Importer",
-	"version": "1.0.3",
-	"minAppVersion": "0.15.0",
-	"description": "A plugin to help you import papers from arXiv",
+	"version": "1.0.4",
+	"minAppVersion": "1.7.6",
+	"description": "Import papers from arXiv with one click.",
 	"author": "Zhe Chen",
 	"authorUrl": "https://zchen.im",
 	"fundingUrl": "",

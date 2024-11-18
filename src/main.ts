@@ -17,7 +17,7 @@ export default class PaperImporterPlugin extends Plugin {
 			id: "import_pdf_from_arxiv",
 			name: "Import PDF from arXiv",
 			callback: () => {
-				new ImportModal(this.app).open();
+				new ImportModal(this.app, this.settings).open();
 			},
 		});
 
