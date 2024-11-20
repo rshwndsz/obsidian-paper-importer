@@ -50,7 +50,10 @@ export class ImportModal extends Modal {
 				}
 
 				try {
-					await this.searchAndImportPaper(arxivId);
+					const [notePath, _] = await this.searchAndImportPaper(
+						arxivId
+					);
+					await this.app.workspace.openLinkText(notePath, "", true);
 				} catch (error) {
 					new Notice(error.message);
 				}
@@ -67,7 +70,7 @@ export class ImportModal extends Modal {
 		contentEl.empty();
 	}
 
-	async searchAndImportPaper(arxivId: string) {
+	async searchAndImportPaper(arxivId: string): Promise<[string, string]> {
 		const paper = await searchPaper(arxivId);
 
 		const pdfFolder = normalizePath(this.settings.pdfFolder);
@@ -108,6 +111,8 @@ export class ImportModal extends Modal {
 			.replace(/{{\s*pdf_link\s*}}/g, `"[[${pdfPath}]]"`);
 
 		await this.app.vault.adapter.write(notePath, noteContent);
+
+		return [notePath, pdfPath];
 	}
 
 	extractArxivId(text: string): string {
