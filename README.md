@@ -6,7 +6,7 @@ A plugin to help you import papers from arXiv into Obsidian.
 
 ### Automatic
 
-Enable community plugins in Obsidian and search for `Paper Importer`. (Still under review)
+Enable community plugins in Obsidian and search for `Paper Importer`.
 
 ### Manual
 
