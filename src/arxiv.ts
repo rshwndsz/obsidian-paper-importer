@@ -54,7 +54,8 @@ export async function searchPaper(arxivId: string): Promise<Paper> {
 		entry
 			.querySelector("link[title='pdf']")
 			?.getAttribute("href")
-			?.trim() || "";
+			?.trim()
+			?.replace(/^http:\/\//i, "https://") || "";
 
 	return {
 		paperId,
