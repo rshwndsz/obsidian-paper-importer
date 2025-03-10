@@ -48,7 +48,8 @@ export async function searchPaper(arxivId: string): Promise<Paper> {
 	const comments = entry.querySelector("comment")?.textContent?.trim() || "";
 
 	const paperId =
-		entry.querySelector("id")?.textContent?.split("/")?.pop()?.trim() || "";
+		entry.querySelector("id")?.textContent?.split("abs/")?.pop()?.trim() ||
+		"";
 
 	const pdfUrl =
 		entry

@@ -117,26 +117,49 @@ export class ImportModal extends Modal {
 
 	extractArxivId(text: string): string {
 		// Match against arXiv:xxxx.xxxx or arxiv:xxxx.xxxxx
-		const arxivIdPattern = /^arXiv:(\d{4}\.\d{4,5})$/;
+		const arxivIdPattern = /^ar[Xx]iv:(\d{4}\.\d{4,5})(?:v\d+)?$/;
 		const match = text.match(arxivIdPattern);
 		if (match) {
 			return match[match.length - 1];
 		}
 
-		// Match against xxxx.xxxx or xxxx.xxxxx
-		const idPattern = /^\d{4}\.\d{4,5}$/;
-		const idMatch = text.match(idPattern);
-		if (idMatch) {
-			return idMatch[0];
+		// Match against arXiv:xxxxx/xxxxxxx or arxiv:xxxxx/xxxxxxx
+		const arxivIdPattern2 = /^ar[Xx]iv:(.+\/\d+)(?:v\d+)?$/;
+		const match2 = text.match(arxivIdPattern2);
+		if (match2) {
+			return match2[match2.length - 1];
 		}
 
 		// Match against arxiv.org/abs/xxxx.xxxx or arxiv.org/abs/xxxx.xxxxx or
 		// arxiv.org/pdf/xxxx.xxxx or arxiv.org/pdf/xxxx.xxxxx
 		const urlPattern =
-			/^(https?:\/\/)?(www\.)?arxiv\.org\/(abs|pdf)\/(\d{4}\.\d{4,5})$/;
+			/^(https?:\/\/)?(www\.)?arxiv\.org\/(abs|pdf)\/(\d{4}\.\d{4,5})(?:v\d+)?$/;
 		const urlMatch = text.match(urlPattern);
 		if (urlMatch) {
 			return urlMatch[urlMatch.length - 1];
+		}
+
+		// Match against arxiv.org/abs/xxxxx/xxxxxxx or arxiv.org/abs/xxxxx/xxxxxxx or
+		// arxiv.org/pdf/xxxxx/xxxxxxx or arxiv.org/pdf/xxxxx/xxxxxxx
+		const urlPattern2 =
+			/^(https?:\/\/)?(www\.)?arxiv\.org\/(abs|pdf)\/(.+\/\d+)(?:v\d+)?$/;
+		const urlMatch2 = text.match(urlPattern2);
+		if (urlMatch2) {
+			return urlMatch2[urlMatch2.length - 1];
+		}
+
+		// Match against xxxx.xxxx or xxxx.xxxxx
+		const idPattern = /^(\d{4}\.\d{4,5})(?:v\d+)?$/;
+		const idMatch = text.match(idPattern);
+		if (idMatch) {
+			return idMatch[idMatch.length - 1];
+		}
+
+		// Match against xxxxx/xxxxxxx
+		const idPattern2 = /^(\d+\/\d+)(?:v\d+)?$/;
+		const idMatch2 = text.match(idPattern2);
+		if (idMatch2) {
+			return idMatch2[idMatch2.length - 1];
 		}
 
 		throw new Error("Invalid arXiv ID or URL");
