@@ -43,7 +43,8 @@ export async function searchPaper(arxivId: string): Promise<Paper> {
 		entry
 			.querySelector("summary")
 			?.textContent?.trim()
-			.replace(/\n/g, " ") || "No abstract available";
+			.replace(/\n/g, " ")
+			.replace(/"/g, "'") || "No abstract available";
 
 	const comments = entry.querySelector("comment")?.textContent?.trim() || "";
 
