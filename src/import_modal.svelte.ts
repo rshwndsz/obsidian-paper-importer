@@ -9,7 +9,7 @@ import type { PaperImporterPluginSettings } from "./setting_tab";
 
 export class ImportModal extends Modal {
 	settings: PaperImporterPluginSettings;
-	importDialog: ImportDialog | null = null;
+	importDialog: ReturnType<typeof ImportDialog> | null = null;
 	states: Record<string, any> = $state({
 		logs: [],
 		downloadProgress: 0,
