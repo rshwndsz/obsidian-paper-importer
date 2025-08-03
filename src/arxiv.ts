@@ -34,7 +34,7 @@ export async function searchPaper(arxivId: string): Promise<Paper> {
 				author.querySelector("name")?.textContent?.trim() ||
 				"Unknown author";
 			return name;
-		}
+		},
 	);
 
 	const date = entry.querySelector("published")?.textContent?.trim() || "";

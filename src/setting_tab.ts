@@ -24,7 +24,7 @@ export class PaperImporterSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.pdfFolder = value;
 						await this.plugin.saveSettings();
-					})
+					}),
 			);
 
 		new Setting(containerEl)
@@ -37,7 +37,7 @@ export class PaperImporterSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.noteFolder = value;
 						await this.plugin.saveSettings();
-					})
+					}),
 			);
 	}
 }

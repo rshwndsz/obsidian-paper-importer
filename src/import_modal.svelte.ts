@@ -49,7 +49,7 @@ export class ImportModal extends Modal {
 							await this.app.workspace.openLinkText(
 								notePath,
 								"",
-								true
+								true,
 							);
 						} catch (error) {
 							this.states.downloadProgress = 0;
@@ -86,7 +86,7 @@ export class ImportModal extends Modal {
 		}
 
 		const pdfFilename = this.sanitizeFilename(
-			`${paper.title} (${paper.paperId}).pdf`
+			`${paper.title} (${paper.paperId}).pdf`,
 		);
 		const pdfPath = normalizePath(`${pdfFolderPath.path}/${pdfFilename}`);
 
@@ -105,7 +105,7 @@ export class ImportModal extends Modal {
 			const response = await fetch(paper.pdfUrl);
 			if (!response.ok) {
 				throw new Error(
-					`Failed to download PDF: ${response.statusText}`
+					`Failed to download PDF: ${response.statusText}`,
 				);
 			}
 
@@ -134,7 +134,7 @@ export class ImportModal extends Modal {
 					// If we don't know the total size, show indeterminate progress
 					this.states.downloadProgress = Math.min(
 						50 + (received / 1000000) * 10,
-						90
+						90,
 					);
 				}
 			}
@@ -149,7 +149,7 @@ export class ImportModal extends Modal {
 
 			await this.app.vault.adapter.writeBinary(
 				pdfPath,
-				arrayBuffer.buffer
+				arrayBuffer.buffer,
 			);
 			this.states.downloadProgress = 100;
 		} catch (error) {
@@ -171,10 +171,10 @@ export class ImportModal extends Modal {
 		}
 
 		const noteFilename = this.sanitizeFilename(
-			`${paper.title} (${paper.paperId}).md`
+			`${paper.title} (${paper.paperId}).md`,
 		);
 		const notePath = normalizePath(
-			`${noteFolderPath.path}/${noteFilename}`
+			`${noteFolderPath.path}/${noteFilename}`,
 		);
 
 		// Check if note already exists
