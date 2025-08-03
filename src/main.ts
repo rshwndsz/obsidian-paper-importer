@@ -1,10 +1,10 @@
 import { Editor, MarkdownView, Modal, Notice, Plugin } from "obsidian";
 import {
 	DEFAULT_SETTINGS,
-	PaperImporterPluginSettings,
+	type PaperImporterPluginSettings,
 	PaperImporterSettingTab,
 } from "./setting_tab";
-import { ImportModal } from "./import_modal";
+import { ImportModal } from "./import_modal.svelte";
 
 export default class PaperImporterPlugin extends Plugin {
 	settings: PaperImporterPluginSettings;
