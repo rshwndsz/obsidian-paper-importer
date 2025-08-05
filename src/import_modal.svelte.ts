@@ -4,7 +4,7 @@ import { mount, unmount } from "svelte";
 import ImportDialog from "./component/ImportDialog.svelte";
 
 import { searchPaper } from "./arxiv";
-import noteTemplate from "./note_template";
+import { DEFAULT_TEMPLATE } from "./default_template";
 import type { PaperImporterPluginSettings } from "./setting_tab";
 
 export class ImportModal extends Modal {
@@ -187,7 +187,46 @@ export class ImportModal extends Modal {
 			throw new Error(`Note already exists: ${notePath}`);
 		}
 
-		const noteContent = noteTemplate
+		// Load template: external file if specified, otherwise use default
+		let template: string;
+
+		if (
+			this.settings.templateFilePath &&
+			this.settings.templateFilePath.trim()
+		) {
+			try {
+				const templatePath = normalizePath(
+					this.settings.templateFilePath
+				);
+				const exists = await this.app.vault.adapter.exists(
+					templatePath
+				);
+				if (exists) {
+					template = await this.app.vault.adapter.read(templatePath);
+					this.states.logs.push([
+						"info",
+						`Using custom template: ${templatePath}`,
+					]);
+				} else {
+					this.states.logs.push([
+						"warn",
+						`Template file not found: ${templatePath}, using default template`,
+					]);
+					template = this.getDefaultTemplate();
+				}
+			} catch (error) {
+				this.states.logs.push([
+					"error",
+					`Failed to read template file: ${error.message}, using default template`,
+				]);
+				template = this.getDefaultTemplate();
+			}
+		} else {
+			template = this.getDefaultTemplate();
+			this.states.logs.push(["info", "Using default template"]);
+		}
+
+		const noteContent = template
 			.replace(/{{\s*paper_id\s*}}/g, paper.paperId)
 			.replace(/{{\s*title\s*}}/g, `"${paper.title}"`)
 			.replace(/{{\s*authors\s*}}/g, paper.authors.join(", "))
@@ -262,5 +301,9 @@ export class ImportModal extends Modal {
 			.replace(/[/\\?%*:|"<>]/g, " ")
 			.replace(/\s+/g, " ")
 			.trim();
+	}
+
+	getDefaultTemplate(): string {
+		return DEFAULT_TEMPLATE;
 	}
 }

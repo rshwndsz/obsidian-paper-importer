@@ -1,4 +1,4 @@
-export default `---
+export const DEFAULT_TEMPLATE = `---
 paper id: {{ paper_id }}
 title: {{ title }}
 authors: {{ authors }}
