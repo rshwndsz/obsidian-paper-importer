@@ -1,10 +1,10 @@
-import { Editor, MarkdownView, Modal, Notice, Plugin } from "obsidian";
+import { Plugin } from "obsidian";
+import { ImportModal } from "./import_modal.svelte";
 import {
 	DEFAULT_SETTINGS,
 	type PaperImporterPluginSettings,
 	PaperImporterSettingTab,
 } from "./setting_tab";
-import { ImportModal } from "./import_modal.svelte";
 
 export default class PaperImporterPlugin extends Plugin {
 	settings: PaperImporterPluginSettings;
@@ -12,12 +12,21 @@ export default class PaperImporterPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		// This adds an editor command that can perform some operation on the current editor instance
+		// This adds a command to import metadata and download PDF from arXiv
 		this.addCommand({
 			id: "import_pdf_from_arxiv",
-			name: "Import PDF from arXiv",
+			name: "Import metadata and PDF from arXiv",
 			callback: () => {
-				new ImportModal(this.app, this.settings).open();
+				new ImportModal(this.app, this.settings, true).open();
+			},
+		});
+
+		// This adds a command to import only metadata without downloading PDF
+		this.addCommand({
+			id: "import_metadata_from_arxiv",
+			name: "Import metadata only from arXiv",
+			callback: () => {
+				new ImportModal(this.app, this.settings, false).open();
 			},
 		});
 
@@ -31,7 +40,7 @@ export default class PaperImporterPlugin extends Plugin {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			await this.loadData(),
+			await this.loadData()
 		);
 	}
 

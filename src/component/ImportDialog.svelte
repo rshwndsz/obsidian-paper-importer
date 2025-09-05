@@ -2,8 +2,9 @@
 	interface Props {
 		onkeypress?: (event: KeyboardEvent, paperUri: string) => void;
 		states: Record<string, any>;
+		downloadPdf?: boolean;
 	}
-	let { onkeypress, states }: Props = $props();
+	let { onkeypress, states, downloadPdf = true }: Props = $props();
 
 	let paperUri: string = $state("");
 	let logContainer: HTMLDivElement | null = $state(null);
@@ -62,10 +63,15 @@
 	}
 </script>
 
-<h4>Import Paper from arXiv</h4>
+<h4>
+	{downloadPdf ? "Import Paper from arXiv" : "Import Metadata from arXiv"}
+</h4>
 <p style="margin-bottom: 20px; color: grey;">
-	Enter the arXiv ID or URL of the paper you want to import. Press Enter to
-	confirm.
+	Enter the arXiv ID or URL of the paper you want to import.
+	{downloadPdf
+		? "The PDF will be downloaded and metadata will be created."
+		: "Only metadata will be imported, no PDF download."}
+	Press Enter to confirm.
 </p>
 
 <input
@@ -79,7 +85,7 @@
 />
 
 <!-- Download Progress Bar -->
-{#if states.downloadProgress !== undefined && states.downloadProgress > 0}
+{#if downloadPdf && states.downloadProgress !== undefined && states.downloadProgress > 0}
 	<div style="margin-top: 20px;">
 		<div
 			style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;"

@@ -9,15 +9,21 @@ import type { PaperImporterPluginSettings } from "./setting_tab";
 
 export class ImportModal extends Modal {
 	settings: PaperImporterPluginSettings;
+	downloadPdf: boolean;
 	importDialog: ReturnType<typeof ImportDialog> | null = null;
 	states: Record<string, any> = $state({
 		logs: [],
 		downloadProgress: 0,
 	});
 
-	constructor(app: App, settings: PaperImporterPluginSettings) {
+	constructor(
+		app: App,
+		settings: PaperImporterPluginSettings,
+		downloadPdf: boolean = true
+	) {
 		super(app);
 		this.settings = settings;
+		this.downloadPdf = downloadPdf;
 	}
 
 	onOpen() {
@@ -27,12 +33,18 @@ export class ImportModal extends Modal {
 			target: contentEl,
 			props: {
 				states: this.states,
+				downloadPdf: this.downloadPdf,
 				onkeypress: async (e: KeyboardEvent, paperUri: string) => {
 					if (e.key === "Enter") {
 						// Reset progress and messages
 						this.states.downloadProgress = 0;
 						this.states.logs.length = 0;
-						this.states.logs.push(["info", "Importing paper..."]);
+						this.states.logs.push([
+							"info",
+							this.downloadPdf
+								? "Importing paper..."
+								: "Importing metadata...",
+						]);
 
 						let arxivId: string;
 						try {
@@ -56,11 +68,15 @@ export class ImportModal extends Modal {
 							return;
 						}
 
-						this.states.logs.push([
-							"success",
-							"Paper imported successfully!",
-						]);
-						new Notice("Paper imported successfully!");
+						// Add a simple success message
+						this.states.logs.push(["success", "Import completed!"]);
+
+						// Show a notice based on the last log entry
+						const lastLog =
+							this.states.logs[this.states.logs.length - 1];
+						if (lastLog && lastLog[0] === "success") {
+							new Notice(lastLog[1]);
+						}
 
 						this.close();
 					}
@@ -78,6 +94,19 @@ export class ImportModal extends Modal {
 	async searchAndImportPaper(arxivId: string): Promise<[string, string]> {
 		const paper = await searchPaper(arxivId);
 
+		let pdfPath = "";
+
+		if (this.downloadPdf) {
+			pdfPath = await this.downloadPdfFile(paper);
+		}
+
+		const notePath = await this.createNoteFromPaper(paper, pdfPath);
+
+		this.states.downloadProgress = 100;
+		return [notePath, pdfPath];
+	}
+
+	private async downloadPdfFile(paper: any): Promise<string> {
 		const pdfFolder = normalizePath(this.settings.pdfFolder);
 
 		let pdfFolderPath = this.app.vault.getFolderByPath(pdfFolder)!;
@@ -93,8 +122,14 @@ export class ImportModal extends Modal {
 		// Check if PDF already exists
 		const pdfExists = await this.app.vault.adapter.exists(pdfPath);
 		if (pdfExists) {
-			this.states.logs.push(["error", `PDF already exists: ${pdfPath}`]);
-			throw new Error(`PDF already exists: ${pdfPath}`);
+			this.states.logs.push([
+				"warn",
+				`PDF already exists: ${pdfPath}. Skipping download.`,
+			]);
+			new Notice(
+				`PDF already exists: ${pdfFilename}. Using existing file.`
+			);
+			return pdfPath; // Return the existing PDF path instead of throwing an error
 		}
 
 		// Download PDF with progress tracking
@@ -151,7 +186,6 @@ export class ImportModal extends Modal {
 				pdfPath,
 				arrayBuffer.buffer
 			);
-			this.states.downloadProgress = 100;
 		} catch (error) {
 			this.states.downloadProgress = 0;
 			this.states.logs.push([
@@ -162,7 +196,13 @@ export class ImportModal extends Modal {
 		}
 
 		this.states.logs.push(["info", `PDF downloaded: ${pdfPath}`]);
+		return pdfPath;
+	}
 
+	private async createNoteFromPaper(
+		paper: any,
+		pdfPath: string
+	): Promise<string> {
 		const noteFolder = normalizePath(this.settings.noteFolder);
 
 		let noteFolderPath = this.app.vault.getFolderByPath(noteFolder)!;
@@ -180,16 +220,34 @@ export class ImportModal extends Modal {
 		// Check if note already exists
 		const noteExists = await this.app.vault.adapter.exists(notePath);
 		if (noteExists) {
-			this.states.logs.push([
-				"error",
-				`Note already exists: ${notePath}`,
-			]);
-			throw new Error(`Note already exists: ${notePath}`);
+			this.states.logs.push(["warn", `Note already exists: ${notePath}`]);
+			new Notice(
+				`Note already exists: ${noteFilename}. Opening existing note.`
+			);
+			return notePath; // Return the existing note path instead of creating a new one
 		}
 
-		// Load template: external file if specified, otherwise use default
-		let template: string;
+		const template = await this.loadTemplate();
 
+		// Determine PDF link format based on whether we downloaded the PDF
+		const pdfLink = pdfPath ? `"[[${pdfPath}]]"` : `"${paper.pdfUrl}"`;
+
+		const noteContent = template
+			.replace(/{{\s*paper_id\s*}}/g, paper.paperId)
+			.replace(/{{\s*title\s*}}/g, `"${paper.title}"`)
+			.replace(/{{\s*authors\s*}}/g, paper.authors.join(", "))
+			.replace(/{{\s*date\s*}}/g, paper.date)
+			.replace(/{{\s*abstract\s*}}/g, `"${paper.abstract}"`)
+			.replace(/{{\s*comments\s*}}/g, `"${paper.comments}"`)
+			.replace(/{{\s*pdf_link\s*}}/g, pdfLink);
+
+		await this.app.vault.adapter.write(notePath, noteContent);
+
+		this.states.logs.push(["info", `Note created: ${notePath}`]);
+		return notePath;
+	}
+
+	private async loadTemplate(): Promise<string> {
 		if (
 			this.settings.templateFilePath &&
 			this.settings.templateFilePath.trim()
@@ -202,43 +260,30 @@ export class ImportModal extends Modal {
 					templatePath
 				);
 				if (exists) {
-					template = await this.app.vault.adapter.read(templatePath);
+					const template = await this.app.vault.adapter.read(
+						templatePath
+					);
 					this.states.logs.push([
 						"info",
 						`Using custom template: ${templatePath}`,
 					]);
+					return template;
 				} else {
 					this.states.logs.push([
 						"warn",
 						`Template file not found: ${templatePath}, using default template`,
 					]);
-					template = this.getDefaultTemplate();
 				}
 			} catch (error) {
 				this.states.logs.push([
 					"error",
 					`Failed to read template file: ${error.message}, using default template`,
 				]);
-				template = this.getDefaultTemplate();
 			}
-		} else {
-			template = this.getDefaultTemplate();
-			this.states.logs.push(["info", "Using default template"]);
 		}
 
-		const noteContent = template
-			.replace(/{{\s*paper_id\s*}}/g, paper.paperId)
-			.replace(/{{\s*title\s*}}/g, `"${paper.title}"`)
-			.replace(/{{\s*authors\s*}}/g, paper.authors.join(", "))
-			.replace(/{{\s*date\s*}}/g, paper.date)
-			.replace(/{{\s*abstract\s*}}/g, `"${paper.abstract}"`)
-			.replace(/{{\s*comments\s*}}/g, `"${paper.comments}"`)
-			.replace(/{{\s*pdf_link\s*}}/g, `"[[${pdfPath}]]"`);
-		await this.app.vault.adapter.write(notePath, noteContent);
-
-		this.states.logs.push(["info", `Note created: ${notePath}`]);
-
-		return [notePath, pdfPath];
+		this.states.logs.push(["info", "Using default template"]);
+		return this.getDefaultTemplate();
 	}
 
 	extractArxivId(text: string): string {

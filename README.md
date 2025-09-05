@@ -16,10 +16,12 @@ plugins in Obsidian setting and that's it.
 
 ## How to Use
 
-Press `Ctrl+P` in Obsidian, and select `Paper Importer: Import PDF from arXiv`. In the popup,
-enter the arXiv ID or URL of the paper (e.g., `1703.06870` or `https://arxiv.org/abs/1703.06870`)
-you would like to import. Press the enter key to confirm. The PDF and its metadata will then
-be saved to selected folders. Those save destinations can be configured via the setting panel.
+Press `Ctrl+P` in Obsidian to open the command palette, then choose one of the following options:
+
+- **`Paper Importer: Import metadata and PDF from arXiv`** - Downloads both the paper's metadata and PDF file
+- **`Paper Importer: Import metadata only from arXiv`** - Imports only the paper's metadata without downloading the PDF
+
+In the popup, enter the arXiv ID or URL of the paper (e.g., `1703.06870` or `https://arxiv.org/abs/1703.06870`) you would like to import. Press the enter key to confirm. The metadata (and PDF if selected) will then be saved to your configured folders. Save destinations can be configured via the plugin settings panel.
 
 ## Template Customization
 
