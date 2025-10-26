@@ -1,5 +1,5 @@
 {
-	"name": "obsidian_paper_importer",
+	"name": "obsidian-paper-importer",
 	"version": "1.4.0",
 	"description": "A plugin to help you import papers from arXiv",
 	"main": "main.js",
@@ -17,17 +17,20 @@
 	"author": "Zhe Chen",
 	"license": "MIT",
 	"devDependencies": {
-		"@types/node": "^16.11.6",
+		"@types/node": "^16.18.126",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
 		"builtin-modules": "3.3.0",
 		"esbuild": "0.17.3",
 		"esbuild-svelte": "^0.9.3",
 		"obsidian": "latest",
-		"svelte": "^5.37.3",
-		"svelte-check": "^4.3.1",
+		"svelte": "^5.42.2",
+		"svelte-check": "^4.3.3",
 		"svelte-preprocess": "^6.0.3",
 		"tslib": "2.4.0",
-		"typescript": "~5.0.0"
+		"typescript": "~5.0.4"
+	},
+	"dependencies": {
+		"@typescript/native-preview": "^7.0.0-dev.20251026.1"
 	}
 }

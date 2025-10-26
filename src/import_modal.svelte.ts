@@ -6,6 +6,7 @@ import ImportDialog from "./component/ImportDialog.svelte";
 import { searchPaper } from "./arxiv";
 import { DEFAULT_TEMPLATE } from "./default_template";
 import type { PaperImporterPluginSettings } from "./setting_tab";
+import type { Paper } from "./arxiv";
 
 export class ImportModal extends Modal {
 	settings: PaperImporterPluginSettings;
@@ -16,11 +17,7 @@ export class ImportModal extends Modal {
 		downloadProgress: 0,
 	});
 
-	constructor(
-		app: App,
-		settings: PaperImporterPluginSettings,
-		downloadPdf: boolean = true
-	) {
+	constructor(app: App, settings: PaperImporterPluginSettings, downloadPdf: boolean = true) {
 		super(app);
 		this.settings = settings;
 		this.downloadPdf = downloadPdf;
@@ -106,7 +103,7 @@ export class ImportModal extends Modal {
 		return [notePath, pdfPath];
 	}
 
-	private async downloadPdfFile(paper: any): Promise<string> {
+	private async downloadPdfFile(paper: Paper): Promise<string> {
 		const pdfFolder = normalizePath(this.settings.pdfFolder);
 
 		let pdfFolderPath = this.app.vault.getFolderByPath(pdfFolder)!;
@@ -114,9 +111,7 @@ export class ImportModal extends Modal {
 			pdfFolderPath = await this.app.vault.createFolder(pdfFolder);
 		}
 
-		const pdfFilename = this.sanitizeFilename(
-			`${paper.title} (${paper.paperId}).pdf`
-		);
+		const pdfFilename = this.sanitizeFilename(`${paper.arxivId}.pdf`);
 		const pdfPath = normalizePath(`${pdfFolderPath.path}/${pdfFilename}`);
 
 		// Check if PDF already exists
@@ -139,9 +134,7 @@ export class ImportModal extends Modal {
 		try {
 			const response = await fetch(paper.pdfUrl);
 			if (!response.ok) {
-				throw new Error(
-					`Failed to download PDF: ${response.statusText}`
-				);
+				throw new Error(`Failed to download PDF: ${response.statusText}`);
 			}
 
 			const contentLength = response.headers.get("content-length");
@@ -199,10 +192,7 @@ export class ImportModal extends Modal {
 		return pdfPath;
 	}
 
-	private async createNoteFromPaper(
-		paper: any,
-		pdfPath: string
-	): Promise<string> {
+	private async createNoteFromPaper(paper: Paper, pdfPath: string): Promise<string> {
 		const noteFolder = normalizePath(this.settings.noteFolder);
 
 		let noteFolderPath = this.app.vault.getFolderByPath(noteFolder)!;
@@ -210,12 +200,11 @@ export class ImportModal extends Modal {
 			noteFolderPath = await this.app.vault.createFolder(noteFolder);
 		}
 
-		const noteFilename = this.sanitizeFilename(
-			`${paper.title} (${paper.paperId}).md`
-		);
-		const notePath = normalizePath(
-			`${noteFolderPath.path}/${noteFilename}`
-		);
+		const lastNameOfFirstAuthor = paper.authors[0]?.split(' ').pop();
+		const yearOfPublication = new Date(paper.publishedDate).getFullYear().toString();
+		const etAl = paper.authors.length == 1 ? ' ' : ' et al., '
+		const noteFilename = this.sanitizeFilename(`${paper.title}, ${lastNameOfFirstAuthor}${etAl}${yearOfPublication}.md`);
+		const notePath = normalizePath(`${noteFolderPath.path}/${noteFilename}`);
 
 		// Check if note already exists
 		const noteExists = await this.app.vault.adapter.exists(notePath);
@@ -233,13 +222,16 @@ export class ImportModal extends Modal {
 		const pdfLink = pdfPath ? `"[[${pdfPath}]]"` : `"${paper.pdfUrl}"`;
 
 		const noteContent = template
-			.replace(/{{\s*paper_id\s*}}/g, paper.paperId)
+			.replace(/{{\s*paper_id\s*}}/g, paper.arxivId)
 			.replace(/{{\s*title\s*}}/g, `"${paper.title}"`)
-			.replace(/{{\s*authors\s*}}/g, paper.authors.join(", "))
-			.replace(/{{\s*date\s*}}/g, paper.date)
+			.replace(/{{\s*created\s*}}/g, `"${paper.title}"`)
+			.replace(/{{\s*today\s*}}/g, new Date().toLocaleDateString('en-CA'))
+			.replace(/{{\s*published\s*}}/g, new Date(paper.publishedDate).toLocaleDateString('en-CA'))
+			.replace(/{{\s*authors\s*}}/g, "\n" + paper.authors.map((a: string) => `- "[[${a}]]"`).join("\n"))
 			.replace(/{{\s*abstract\s*}}/g, `"${paper.abstract}"`)
 			.replace(/{{\s*comments\s*}}/g, `"${paper.comments}"`)
-			.replace(/{{\s*pdf_link\s*}}/g, pdfLink);
+			.replace(/{{\s*link\s*}}/g, `https://arxiv.org/abs/${paper.arxivId}`)
+			.replace(/{{\s*source\s*}}/g, pdfLink);
 
 		await this.app.vault.adapter.write(notePath, noteContent);
 
@@ -343,7 +335,8 @@ export class ImportModal extends Modal {
 
 	sanitizeFilename(filename: string): string {
 		return filename
-			.replace(/[/\\?%*:|"<>]/g, " ")
+			.replace(/\s*:\s*/g, " - ")
+			.replace(/[/\\?%*|"<>]/g, " ")
 			.replace(/\s+/g, " ")
 			.trim();
 	}

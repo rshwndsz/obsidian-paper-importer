@@ -1,17 +1,17 @@
 import { requestUrl } from "obsidian";
 
-interface Paper {
-	paperId: string;
+export interface Paper {
+	arxivId: string;
 	title: string;
 	authors: string[];
-	date: string;
+	publishedDate: string;
 	abstract: string;
 	comments: string;
 	pdfUrl: string;
 }
 
-export async function searchPaper(arxivId: string): Promise<Paper> {
-	const url = `https://export.arxiv.org/api/query?id_list=${arxivId}`;
+export async function searchPaper(id: string): Promise<Paper> {
+	const url = `https://export.arxiv.org/api/query?id_list=${id}`;
 
 	const response = await requestUrl({ url });
 	const parser = new DOMParser();
@@ -37,7 +37,7 @@ export async function searchPaper(arxivId: string): Promise<Paper> {
 		},
 	);
 
-	const date = entry.querySelector("published")?.textContent?.trim() || "";
+	const publishedDate = entry.querySelector("published")?.textContent?.trim() || "";
 
 	const abstract =
 		entry
@@ -48,9 +48,7 @@ export async function searchPaper(arxivId: string): Promise<Paper> {
 
 	const comments = entry.querySelector("comment")?.textContent?.trim() || "";
 
-	const paperId =
-		entry.querySelector("id")?.textContent?.split("abs/")?.pop()?.trim() ||
-		"";
+	const arxivId = entry.querySelector("id")?.textContent?.split("abs/")?.pop()?.trim() || "";
 
 	const pdfUrl =
 		entry
@@ -60,10 +58,10 @@ export async function searchPaper(arxivId: string): Promise<Paper> {
 			?.replace(/^http:\/\//i, "https://") || "";
 
 	return {
-		paperId,
+		arxivId,
 		title,
 		authors,
-		date,
+		publishedDate,
 		abstract,
 		comments,
 		pdfUrl,
